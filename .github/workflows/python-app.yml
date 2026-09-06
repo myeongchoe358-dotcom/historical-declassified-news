@@ -26,17 +26,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4 schedule pytest python-dotenv
-          if [ -f requirements.txt ]; then pip install -r requirements.txt || true; fi
 
-      - name: Create .env file for configuration
-        env:
-          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-        run: |
-          echo "EMAIL_ADDRESS=${EMAIL_ADDRESS}" > .env
-          echo "SMTP_PASSWORD=${SMTP_PASSWORD}" >> .env
-
-      - name: Run Email Sender Directly
+      - name: Debug and Force Send Email
         env:
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
@@ -45,27 +36,23 @@ jobs:
           import os, sys
           from email_sender import EmailSender
 
-          # 校验 Secrets 是否挂载成功
           email = os.environ.get('EMAIL_ADDRESS')
           password = os.environ.get('SMTP_PASSWORD')
-          
+
+          print(f'Checking Env: EMAIL_ADDRESS is {\"SET\" if email else \"MISSING\"}')
+          print(f'Checking Env: SMTP_PASSWORD is {\"SET\" if password else \"MISSING\"}')
+
           if not email or not password:
-              print('❌ 错误：GitHub Secrets 中的 EMAIL_ADDRESS 或 SMTP_PASSWORD 未设置或未获取到！')
-              sys.exit(1)
+              raise ValueError('GitHub Secrets 中的 EMAIL_ADDRESS 或 SMTP_PASSWORD 未填写！')
 
-          test_content = '''
-          <div style=\"padding:20px; background-color:#f4f4f4; font-family:sans-serif;\">
-            <h2 style=\"color:#2b5797;\">🎉 GitHub Actions 测试成功！</h2>
-            <p>您的发信模块、环境变量及 SMTP 配置均已完全通畅！</p>
-          </div>
-          '''
+          # 写入配置文件依赖
+          with open('.env', 'w') as f:
+              f.write(f'EMAIL_ADDRESS={email}\nSMTP_PASSWORD={password}\n')
 
-          try:
-              sender = EmailSender()
-              # 显式使用从环境变量或类中读取的参数发信
-              sender.send_email(test_content)
-              print('✅ 邮件已成功发送至 SMTP 服务器！')
-          except Exception as e:
-              print('❌ 发送邮件时发生错误：', e)
-              sys.exit(1)
+          sender = EmailSender()
+          print('Attempting to connect to SMTP server...')
+          
+          # 不使用 try-except，让真实的 SMTP 报错显现
+          sender.send_email('<h1>GitHub Actions 测试</h1><p>发信测试中...</p>')
+          print('SUCCESS: Email sent successfully!')
           "
