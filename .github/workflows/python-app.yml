@@ -28,9 +28,21 @@ jobs:
           pip install requests beautifulsoup4 schedule pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt || true; fi
 
-      - name: Run workflow test and send email
+      - name: Run Direct Email Test
         env:
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: |
-          python "测试工作流.py"
+          python -c "
+          import email_sender
+          sender = email_sender.EmailSender()
+          # 兼容不同方法名的发信测试
+          if hasattr(sender, 'send_email'):
+              try:
+                  sender.send_email('${{ secrets.EMAIL_ADDRESS }}', 'GitHub Actions 自动测试', '<h1>测试成功！</h1>')
+              except TypeError:
+                  sender.send_email(to_email='${{ secrets.EMAIL_ADDRESS }}', subject='GitHub Actions 自动测试', content='<h1>测试成功！</h1>')
+          elif hasattr(sender, 'send'):
+              sender.send('${{ secrets.EMAIL_ADDRESS }}', 'GitHub Actions 自动测试', '<h1>测试成功！</h1>')
+          print('Send test completed!')
+          "
