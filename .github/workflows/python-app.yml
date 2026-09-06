@@ -22,37 +22,42 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests beautifulsoup4 schedule pytest python-dotenv
-
-      - name: Debug and Force Send Email
+      - name: Send Raw Direct Email
         env:
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: |
           python -c "
-          import os, sys
-          from email_sender import EmailSender
+          import os, smtplib, sys
+          from email.mime.text import MIMEText
+          from email.mime.multipart import MIMEMultipart
 
-          email = os.environ.get('EMAIL_ADDRESS')
+          sender_email = os.environ.get('EMAIL_ADDRESS')
           password = os.environ.get('SMTP_PASSWORD')
 
-          print(f'Checking Env: EMAIL_ADDRESS is {\"SET\" if email else \"MISSING\"}')
-          print(f'Checking Env: SMTP_PASSWORD is {\"SET\" if password else \"MISSING\"}')
+          if not sender_email or not password:
+              print('❌ 错误：GitHub Secrets 中的 EMAIL_ADDRESS 或 SMTP_PASSWORD 为空！')
+              sys.exit(1)
 
-          if not email or not password:
-              raise ValueError('GitHub Secrets 中的 EMAIL_ADDRESS 或 SMTP_PASSWORD 未填写！')
+          msg = MIMEMultipart()
+          msg['From'] = sender_email
+          msg['To'] = sender_email
+          msg['Subject'] = '🎉 GitHub Actions 直连发信测试成功！'
 
-          # 写入配置文件依赖
-          with open('.env', 'w') as f:
-              f.write(f'EMAIL_ADDRESS={email}\nSMTP_PASSWORD={password}\n')
+          body = '<h1>测试成功！</h1><p>如果收到这封邮件，说明 Gmail 应用专用密码及 GitHub Secrets 配置完全正确！</p>'
+          msg.attach(MIMEText(body, 'html'))
 
-          sender = EmailSender()
-          print('Attempting to connect to SMTP server...')
-          
-          # 不使用 try-except，让真实的 SMTP 报错显现
-          sender.send_email('<h1>GitHub Actions 测试</h1><p>发信测试中...</p>')
-          print('SUCCESS: Email sent successfully!')
+          try:
+              print('正在连接 Gmail SMTP 服务器 (smtp.gmail.com:587)...')
+              server = smtplib.SMTP('smtp.gmail.com', 587)
+              server.starttls()
+              print('正在验证密码...')
+              server.login(sender_email, password)
+              print('正在投递邮件...')
+              server.sendmail(sender_email, sender_email, msg.as_string())
+              server.quit()
+              print('✅ SUCCESS: 邮件已成功通过 Gmail 服务器发送！')
+          except Exception as e:
+              print('❌ 发送失败，真实错误原因：', e)
+              sys.exit(1)
           "
