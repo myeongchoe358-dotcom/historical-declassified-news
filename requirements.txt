@@ -3,7 +3,7 @@ beautifulsoup4==4.12.2
 feedparser==6.0.10
 schedule==1.2.0
 python-dotenv==1.0.0
-lxml==4.9.3
+lxml>=5.0.0
 selenium==4.14.0
 webdriver-manager==4.0.1
 jieba==0.42.1
