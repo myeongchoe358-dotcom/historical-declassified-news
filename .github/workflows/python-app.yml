@@ -25,10 +25,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests beautifulsoup4 schedule
+          pip install requests beautifulsoup4 schedule pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt || true; fi
 
-      - name: Run Direct Workflow & Send Email
+      - name: Run Workflow and Send Email
         env:
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
@@ -36,24 +36,24 @@ jobs:
           python -c "
           import os, sys, importlib
 
-          # 1. 动态加载中文命名的爬虫模块
+          # 动态加载中文命名的爬虫模块并初始化数据库
           try:
               crawler_module = importlib.import_module('数据爬虫')
               crawler = crawler_module.DataCrawler()
               crawler.init_db()
               print('Database initialized successfully.')
           except Exception as e:
-              print('Init DB info:', e)
+              print('DB Init Info:', e)
 
-          # 2. 直接调用邮件模块进行发信测试
+          # 调用邮件发送模块
           import email_sender
           try:
               sender = email_sender.EmailSender()
               to_mail = os.environ.get('EMAIL_ADDRESS')
               sender.send_email(
                   to_email=to_mail,
-                  subject='GitHub Actions 自动解密新闻测试邮件',
-                  content='<h1>工作流测试成功！</h1><p>您的 GitHub Actions 自动发信与数据爬虫环境已配置完毕。</p>'
+                  subject='GitHub Actions 自动测试邮件',
+                  content='<h1>工作流测试成功！</h1><p>您的 GitHub Actions 自动发信已完全配置成功。</p>'
               )
               print('Email sent successfully!')
           except Exception as e:
