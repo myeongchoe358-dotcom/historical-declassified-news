@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
   schedule:
-    # 每天北京时间 08:00（UTC 时间 00:00）自动触发执行
+    # 每天北京时间 08:00（UTC 时间 00:00）自动运行
     - cron: '0 0 * * *'
   workflow_dispatch:
 
@@ -42,17 +42,25 @@ jobs:
           python -c "
           import data_crawler, content_processor, email_sender
 
-          # 1. 初始化并运行爬虫抓取数据
+          # 1. 执行爬虫数据抓取与数据库初始化
+          print('--- 正在初始化数据库并抓取数据 ---')
           crawler = data_crawler.DataCrawler()
-          crawler.init_db()
+          if hasattr(crawler, 'init_db'):
+              crawler.init_db()
           crawler.run()
 
-          # 2. 读取并处理新闻数据
+          # 2. 读取并生成邮件内容
+          print('--- 正在处理新闻内容 ---')
           processor = content_processor.ContentProcessor()
-          news_html = processor.get_latest_news_html()
+          news_content = ''
+          if hasattr(processor, 'get_latest_news_html'):
+              news_content = processor.get_latest_news_html()
+          elif hasattr(processor, 'get_latest_news'):
+              news_content = processor.get_latest_news()
 
           # 3. 发送新闻邮件
+          print('--- 正在发送邮件 ---')
           sender = email_sender.EmailSender()
-          sender.send_email(news_html)
+          sender.send_email(news_content)
           print('🎉 每日自动抓取与发信流程完成！')
           "
