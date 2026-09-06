@@ -36,13 +36,6 @@ jobs:
           python -c "
           import email_sender
           sender = email_sender.EmailSender()
-          # 兼容不同方法名的发信测试
-          if hasattr(sender, 'send_email'):
-              try:
-                  sender.send_email('${{ secrets.EMAIL_ADDRESS }}', 'GitHub Actions 自动测试', '<h1>测试成功！</h1>')
-              except TypeError:
-                  sender.send_email(to_email='${{ secrets.EMAIL_ADDRESS }}', subject='GitHub Actions 自动测试', content='<h1>测试成功！</h1>')
-          elif hasattr(sender, 'send'):
-              sender.send('${{ secrets.EMAIL_ADDRESS }}', 'GitHub Actions 自动测试', '<h1>测试成功！</h1>')
+          sender.send_email('<h1>测试成功！</h1><p>您的 GitHub Actions 自动发信工作流已配置完毕。</p>')
           print('Send test completed!')
           "
