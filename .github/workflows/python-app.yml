@@ -28,35 +28,9 @@ jobs:
           pip install requests beautifulsoup4 schedule pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt || true; fi
 
-      - name: Run Workflow and Send Email
+      - name: Run workflow test and send email
         env:
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: |
-          python -c "
-          import os, sys, importlib
-
-          # 动态加载中文命名的爬虫模块并初始化数据库
-          try:
-              crawler_module = importlib.import_module('数据爬虫')
-              crawler = crawler_module.DataCrawler()
-              crawler.init_db()
-              print('Database initialized successfully.')
-          except Exception as e:
-              print('DB Init Info:', e)
-
-          # 调用邮件发送模块
-          import email_sender
-          try:
-              sender = email_sender.EmailSender()
-              to_mail = os.environ.get('EMAIL_ADDRESS')
-              sender.send_email(
-                  to_email=to_mail,
-                  subject='GitHub Actions 自动测试邮件',
-                  content='<h1>工作流测试成功！</h1><p>您的 GitHub Actions 自动发信已完全配置成功。</p>'
-              )
-              print('Email sent successfully!')
-          except Exception as e:
-              print('Email sending failed:', e)
-              sys.exit(1)
-          "
+          python "测试工作流.py"
