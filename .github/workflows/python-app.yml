@@ -28,6 +28,10 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install schedule requests beautifulsoup4
 
+      - name: Initialize Database
+        run: |
+          python -c "import data_crawler; crawler = data_crawler.DataCrawler(); crawler.init_db()"
+
       - name: Run workflow test and send email
         env:
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
