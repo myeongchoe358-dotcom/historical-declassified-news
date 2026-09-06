@@ -25,8 +25,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests beautifulsoup4
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install schedule requests beautifulsoup4
 
       - name: Run workflow test and send email
         env:
